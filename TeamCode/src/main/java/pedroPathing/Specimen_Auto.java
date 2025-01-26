@@ -108,7 +108,8 @@ public class Specimen_Auto extends LinearOpMode {
     private final Pose startPose = new Pose(9, 72, Math.toRadians(180));
 
     /** Scoring Pose of our robot. It is facing the submersible at a -45 degree (315 degree) angle. */
-    private final Pose sample0scorePose = new Pose(34, 72, Math.toRadians(180));
+    private final Pose sample0scorePose = new Pose(36.2
+            , 72, Math.toRadians(180));
     private final Pose sample1scorePose = new Pose(34, 71, Math.toRadians(180));
     private final Pose sample2scorePose = new Pose(34, 70, Math.toRadians(180));
 
@@ -119,7 +120,7 @@ public class Specimen_Auto extends LinearOpMode {
     /** Middle (Second) Sample from the Spike Mark */
     private final Pose sample1Pose = new Pose(60, 33, Math.toRadians(180));
     private final Pose sample1CP1 = new Pose(19, 10);
-    private final Pose sample1CP2 = new Pose(65, 65);
+    private final Pose sample1CP2 = new Pose(65, 60);
     private final Pose pushSample1Pose = new Pose(14, 15, Math.toRadians(0));
 
     /** Highest (Third) Sample from the Spike Mark */
@@ -225,7 +226,7 @@ public class Specimen_Auto extends LinearOpMode {
         switch (pathState) {
             case 0:
                 stoppersDown();
-                follower.setMaxPower(0.75);
+                follower.setMaxPower(0.3);
                 follower.followPath(scorePreload);
                 setPathState(1);
                 break;
