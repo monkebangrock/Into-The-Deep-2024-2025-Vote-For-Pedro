@@ -68,6 +68,27 @@ public class PedroBucket extends LinearOpMode {
     RevBlinkinLedDriver blinkinLedDriver;
     RevBlinkinLedDriver.BlinkinPattern pattern = RevBlinkinLedDriver.BlinkinPattern.HOT_PINK;
 
+    //constants
+    final double FRONT_CLAW_OPENED = 0.1;
+    final double FRONT_CLAW_CLOSED = 0.31;
+    final double BACK_CLAW_OPENED = 0.1;
+    final double BACK_CLAW_CLOSED = 0.33;
+    final int ARM_POS_UP = -180;
+    final int ARM_POS_DOWN = -750;
+    final int ARM_POS_TILT = -1310;
+    final int SLIDES_BUCKET_DOWN = 0;
+    final int SLIDES_BUCKET_LOW = 1730;
+    final int SLIDES_BUCKET_HIGH = 3100;
+    final int SLIDES_SPECIMEN_DOWN = 100;
+    final int SLIDES_SPECIMEN_TRANSFER = 640;
+    final int SLIDES_SPECIMEN_PREP_HANG = 1450;
+    final int SLIDES_ROBOT_HANG = 1450;
+    final double FRONT_WRIST_HORIZONTAL = 0.61;
+    final double STOPPER1_DOWN = 0.7;
+    final double STOPPER2_DOWN = 0.74;    // offset seems slightly different on 2
+    final double STOPPER1_UP = 0.0;
+    final double STOPPER2_UP = 0.0;
+
     // Calculate the COUNTS_PER_INCH for your specific drive train.
     // Go to your motor vendor website to determine your motor's COUNTS_PER_MOTOR_REV
     // For external drive gearing, set DRIVE_GEAR_REDUCTION as needed.
@@ -78,22 +99,19 @@ public class PedroBucket extends LinearOpMode {
     static final double DRIVE_GEAR_REDUCTION = 1.0;     // No External Gearing.
     static final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
-            (WHEEL_DIAMETER_INCHES * 3.1415);final double FRONT_CLAW_OPENED = 0.1;
-    final double FRONT_CLAW_CLOSED = 0.31;
-    final double BACK_CLAW_OPENED = 0.1;
-    final double BACK_CLAW_CLOSED = 0.33;
-    final int SLIDES_SPECIMEN_DOWN = 0;
-    final int SLIDES_SPECIMEN_PREP_HANG = 1450;
-    final double FRONT_WRIST_HORIZONTAL = 0.61;
-    final double STOPPER1_DOWN = 0.7;
-    final double STOPPER2_DOWN = 0.74;    // offset seems slightly different on 2
-    final double STOPPER1_UP = 0.0;
-    final double STOPPER2_UP = 0.0;
+            (WHEEL_DIAMETER_INCHES * 3.1415);
 
-    /** This is the variable where we store the state of our auto.
-     * It is used by the pathUpdate method. */
+    /**
+     * This is the variable where we store the state of our auto.
+     * It is used by the pathUpdate method.
+     */
     private int pathState;
     private Timer timer = new Timer();
+
+    double tonguePos = 0.0;
+    double rotWristPos = FRONT_WRIST_HORIZONTAL;
+    boolean grabbing = false;
+    boolean depositMode = false;
 
     /* Create and Define Poses + Paths
      * Poses are built with three constructors: x, y, and heading (in Radians).
@@ -104,117 +122,137 @@ public class PedroBucket extends LinearOpMode {
      * Lets assume our robot is 18 by 18 inches
      * Lets assume the Robot is facing the human player and we want to score in the bucket */
 
-    /** robot poses **/
+    /**
+     * robot poses
+     **/
     private final Pose startPose = new Pose(9, 96, Math.toRadians(0));
     private final Pose bucketPose = new Pose(12.67, 125.9, Math.toRadians(-45));
     private final Pose s1Pose = new Pose(29, 118.1, Math.toRadians(0));
     private final Pose s2Pose = new Pose(29, 130.4, Math.toRadians(0));
-    private final Pose s3Pose = new Pose(46.2, 127.9, Math.toRadians(90));
-    private final Pose park = new Pose(72, 108, Math.toRadians(0));
-
-    /** robot poses **/
+    private final Pose s3Pose = new Pose(46.2, 123.9, Math.toRadians(90));
+    private final Pose park = new Pose(72, 98, Math.toRadians(-90));
+    private final Pose parkCP = new Pose(74.6, 131.6, Math.toRadians(0));
+    /**
+     * robot poses
+     **/
     private PathChain bucket, s1, buckets1, s2, buckets2, s3, buckets3, toPark;
 
-    /** Build the paths for the auto (adds, for example, constant/linear headings while doing paths)
-     * It is necessary to do this so that all the paths are built before the auto starts. **/
+    /**
+     * Build the paths for the auto (adds, for example, constant/linear headings while doing paths)
+     * It is necessary to do this so that all the paths are built before the auto starts.
+     **/
     public void buildPaths() {
         bucket = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(startPose),new Point(bucketPose)))
+                .addPath(new BezierLine(new Point(startPose), new Point(bucketPose)))
                 .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-45))
                 .build();
 
         s1 = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(bucketPose), new Point(s1Pose)))
-                .setLinearHeadingInterpolation(Math.toRadians(-45),Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(-45), Math.toRadians(0))
                 .build();
 
         buckets1 = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(s1Pose), new Point(bucketPose)))
-                .setLinearHeadingInterpolation(Math.toRadians(0),Math.toRadians(-45))
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-45))
                 .build();
 
         s2 = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(bucketPose), new Point(s2Pose)))
-                .setLinearHeadingInterpolation(Math.toRadians(-45),Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(-45), Math.toRadians(0))
                 .build();
 
         buckets2 = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(s2Pose), new Point(bucketPose)))
-                .setLinearHeadingInterpolation(Math.toRadians(0),Math.toRadians(-45))
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-45))
                 .build();
 
         s3 = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(bucketPose), new Point(s2Pose)))
-                .setLinearHeadingInterpolation(Math.toRadians(-45),Math.toRadians(0))
+                .addPath(new BezierLine(new Point(bucketPose), new Point(s3Pose)))
+                .setLinearHeadingInterpolation(Math.toRadians(-45), Math.toRadians(90))
                 .build();
 
         buckets3 = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(s3Pose), new Point(bucketPose)))
-                .setLinearHeadingInterpolation(Math.toRadians(0),Math.toRadians(-45))
+                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(-45))
                 .build();
 
         toPark = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(bucketPose), new Point(park)))
-                .setLinearHeadingInterpolation(Math.toRadians(-45),Math.toRadians(0))
+                .addPath(new BezierCurve(new Point(bucketPose), new Point(parkCP), new Point(park)))
+                .setLinearHeadingInterpolation(Math.toRadians(-45), Math.toRadians(-90))
                 .build();
     }
 
-    /** This switch is called continuously and runs the pathing, at certain points, it triggers the action state.
+    /**
+     * This switch is called continuously and runs the pathing, at certain points, it triggers the action state.
      * Everytime the switch changes case, it will reset the timer. (This is because of the setPathState() method)
-     * The followPath() function sets the follower to run the specific path, but does NOT wait for it to finish before moving on. */
+     * The followPath() function sets the follower to run the specific path, but does NOT wait for it to finish before moving on.
+     */
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
-                follower.setMaxPower(0.3);
-                follower.followPath(bucket, true);
+                follower.setMaxPower(1);
+                follower.followPath(bucket);
                 setPathState(1);
                 break;
             case 1:
-                if(!follower.isBusy()) {
+                if (!follower.isBusy()) {
                     //slides up, drop into bucket
-                    follower.followPath(s1,true);
+                    slide(1);
+                    backClaw(1);
+                    follower.followPath(s1);
                     setPathState(2);
                 }
                 break;
             case 2:
-                if(!follower.isBusy()) {
+                if (!follower.isBusy()) {
                     //pick up sample, pass to back claw
-                    follower.followPath(buckets1,true);
+                    grab();
+                    transfer();
+                    follower.followPath(buckets1);
                     setPathState(3);
                 }
                 break;
             case 3:
-                if(!follower.isBusy()) {
-                    //slides up, drop into bucket
-                    follower.followPath(s2,true);
+                if (!follower.isBusy()) {
+                    slide(1);
+                    backClaw(1);
+                    follower.followPath(s2);
                     setPathState(4);
                 }
                 break;
             case 4:
-                if(!follower.isBusy()) {
+                if (!follower.isBusy()) {
                     //pick up sample, pass to back claw
-                    follower.followPath(buckets2,true);
+                    grab();
+                    transfer();
+                    follower.followPath(buckets2);
                     setPathState(5);
                 }
                 break;
             case 5:
-                if(!follower.isBusy()) {
+                if (!follower.isBusy()) {
                     //slides up, drop into bucket
-                    follower.followPath(s3,true);
+                    slide(1);
+                    backClaw(1);
+                    follower.followPath(s3);
                     setPathState(6);
                 }
                 break;
             case 6:
-                if(!follower.isBusy()) {
+                if (!follower.isBusy()) {
                     //pick up sample, pass to back claw
-                    follower.followPath(buckets3,true);
+                    grab2();
+                    transfer();
+                    follower.followPath(buckets3);
                     setPathState(7);
                 }
                 break;
             case 7:
-                if(!follower.isBusy()) {
+                if (!follower.isBusy()) {
                     //go to park
-                    follower.followPath(toPark,true);
+                    follower.followPath(toPark);
+                    ending();
                     setPathState(-1);
                 }
                 break;
@@ -222,8 +260,10 @@ public class PedroBucket extends LinearOpMode {
 
     }
 
-    /** These change the states of the paths and actions
-     * It will also reset the timers of the individual switches **/
+    /**
+     * These change the states of the paths and actions
+     * It will also reset the timers of the individual switches
+     **/
     public void setPathState(int pState) {
         pathState = pState;
         pathTimer.resetTimer();
@@ -302,61 +342,25 @@ public class PedroBucket extends LinearOpMode {
         }
     }
 
-    public void wallGrab(){
-        while(backWrist.getPosition()!=0.14 && opModeIsActive()){
-            backWrist.setPosition(0.14);
-        }
-        while(backClaw.getPosition()!=0.1 && opModeIsActive()){
-            backClaw.setPosition(0.1);
-        }
-        while(slideR.getCurrentPosition() > 10 && opModeIsActive()){
-            slideR.setVelocity(3000);
-            slideL.setVelocity(3000);
-            slideR.setTargetPosition(0);
-            slideL.setTargetPosition(0);
-        }
-        sleep(20);
-        while(backClaw.getPosition()!=0.33 && opModeIsActive()){
-            backClaw.setPosition(0.33);
-        }
-        while(slideR.getCurrentPosition() < SLIDES_SPECIMEN_PREP_HANG + 5 && opModeIsActive()){
-            slideR.setVelocity(3000);
-            slideL.setVelocity(3000);
-            slideR.setTargetPosition(SLIDES_SPECIMEN_PREP_HANG + 5);
-            slideL.setTargetPosition(SLIDES_SPECIMEN_PREP_HANG + 5);
-        }
-    }
-
-    public void specimenHang(){
-        while (slideR.getCurrentPosition() > SLIDES_SPECIMEN_DOWN +5 && opModeIsActive()) {
-            stopper1.setPosition(0);
-            stopper2.setPosition(0);
-            backWrist.setPosition(0.14);
-            slideR.setVelocity(3000);
-            slideL.setVelocity(3000);
-            slideR.setTargetPosition(SLIDES_SPECIMEN_DOWN);
-            slideL.setTargetPosition(SLIDES_SPECIMEN_DOWN);
-            if (slideR.getCurrentPosition() > 1000) {
-                backClaw.setPosition(BACK_CLAW_CLOSED);
+    public void slide(int lvl) {
+        if (lvl == 1) {
+            while (slideR.getCurrentPosition() < 2750 && opModeIsActive()) {
+                slideR.setVelocity(3000);
+                slideL.setVelocity(3000);
+                slideR.setTargetPosition(2750);
+                slideL.setTargetPosition(2750);
             }
-            else{
-                while(backClaw.getPosition()!=BACK_CLAW_OPENED && opModeIsActive()){
-                    backClaw.setPosition(BACK_CLAW_OPENED);
+        } else {
+            while (slideR.getCurrentPosition() > 0 && opModeIsActive()) {
+                slideR.setVelocity(3000);
+                slideL.setVelocity(3000);
+                slideR.setTargetPosition(0);
+                slideL.setTargetPosition(0);
+                if (slideR.getCurrentPosition() < 30) {
+                    slideR.setVelocity(0);
+                    slideL.setVelocity(0);
                 }
             }
-        }
-    }
-
-    public void stoppersDown(){
-        while(slideR.getCurrentPosition() < SLIDES_SPECIMEN_PREP_HANG + 5 && opModeIsActive()){
-            stopper1.setPosition(STOPPER1_DOWN);
-            stopper2.setPosition(STOPPER2_DOWN);
-            backWrist.setPosition(0.14);
-            backClaw.setPosition(BACK_CLAW_CLOSED);
-            slideR.setVelocity(3000);
-            slideL.setVelocity(3000);
-            slideR.setTargetPosition(SLIDES_SPECIMEN_PREP_HANG);
-            slideL.setTargetPosition(SLIDES_SPECIMEN_PREP_HANG);
         }
     }
 
@@ -381,20 +385,39 @@ public class PedroBucket extends LinearOpMode {
         telemetry.update();
     }
 
-    public void ending(){
-        wrist.setPosition(0);
-        stopper1.setPosition(0);
-        stopper2.setPosition(0);
-        while(slideR.getCurrentPosition() > 0 && opModeIsActive()){
-            slideR.setVelocity(3000);
-            slideL.setVelocity(3000);
-            slideR.setTargetPosition(0);
-            slideL.setTargetPosition(0);
+    public void grab() {
+        tongue.setPosition(0);
+        claw.setPosition(0.1);
+        wrist.setPosition(0.7);
+        armTarget = -810;
+        int curPos = armHinge.getCurrentPosition();
+        while (curPos >= -810 && opModeIsActive()) {
+            armHinge.setMotorEnable();
+            armHinge.setVelocity(800);
+            armHinge.setTargetPosition(-810);
+            armMoving = true;
+            curPos = armHinge.getCurrentPosition();
         }
+        sleep(200);
+        claw.setPosition(0.32);
     }
 
-    public void tongue(int pos) { //-1 is out, 1 is in
-        tongue.setPosition(pos);
+    public void grab2() {
+        tongue.setPosition(0);
+        claw.setPosition(0.1);
+        wrist.setPosition(0.7);
+        rotWrist.setPosition(0.11);
+        armTarget = -810;
+        int curPos = armHinge.getCurrentPosition();
+        while (curPos >= -810 && opModeIsActive()) {
+            armHinge.setMotorEnable();
+            armHinge.setVelocity(800);
+            armHinge.setTargetPosition(-810);
+            armMoving = true;
+            curPos = armHinge.getCurrentPosition();
+        }
+        sleep(200);
+        claw.setPosition(0.32);
     }
 
     public void claw(double pos) { //0.2 is open, 0.55 is closed
@@ -404,20 +427,86 @@ public class PedroBucket extends LinearOpMode {
         }
     }
 
-    public void wrist(double pos) { //0 is back, 0.62 is down for grab
+    public void wrist(double pos) { //0 is back, 0.15 is in line w/ arm
         while (wrist.getPosition() != pos && opModeIsActive()) {
             wrist.setPosition(pos);
         }
     }
 
-    public void backClaw(double pos){ //0 is closed, 0.35 is open
-        while (backClaw.getPosition() != pos && opModeIsActive()) {
-            backClaw.setPosition(pos);
+    public void raiseSlides() {
+        while (slideR.getCurrentPosition() < 3100 && opModeIsActive()) {
+            backWrist.setPosition(0.14);
+            slideR.setVelocity(5000);
+            slideL.setVelocity(5000);
+            slideR.setTargetPosition(3100);
+            slideL.setTargetPosition(3100);
+            if (slideR.getCurrentPosition() > 3100) {
+                backClaw.setPosition(BACK_CLAW_CLOSED);
+            } else {
+                while (backClaw.getPosition() != BACK_CLAW_OPENED && opModeIsActive()) {
+                    backClaw.setPosition(BACK_CLAW_OPENED);
+                }
+            }
         }
     }
-    public void backWrist(double pos){ //0 is out, 0.65 is towards the other claw
-        while (backWrist.getPosition() != pos && opModeIsActive()) {
-            backWrist.setPosition(pos);
+
+    public void transfer() { //fix
+        int target = 190;
+        backClaw.setPosition(0.1);
+        backWrist.setPosition(0.75);
+        rotWrist.setPosition(0.61);
+        wrist.setPosition(0.04);
+        tongue.setPosition(0);
+        while ((slideR.getCurrentPosition() > (target + 10) || slideR.getCurrentPosition() < (target - 10)) && opModeIsActive()) {
+            slideR.setVelocity(1000);
+            slideL.setVelocity(1000);
+            slideR.setTargetPosition(target);
+            slideL.setTargetPosition(target);
+            slideLevel = 0;
+            telemetry.addData("SlideR Pos", slideR.getCurrentPosition());
+            telemetry.addData("SlideR Tgt", slideR.getTargetPosition());
+            telemetry.update();
+        }
+        armTarget = -245;
+        int curPos = armHinge.getCurrentPosition();
+        while ((curPos < (-245 - 5) || curPos > (-245 + 5)) && opModeIsActive()) {
+            armHinge.setMotorEnable();
+            armHinge.setVelocity(1500);
+            armHinge.setTargetPosition(-245);
+            armMoving = true;
+            curPos = armHinge.getCurrentPosition();
+        }
+        backClaw.setPosition(0.32);
+        sleep(300);
+        claw.setPosition(0.1);
+        sleep(300);
+        backWrist.setPosition(0.16);
+        // get slide in prep position
+        slideR.setVelocity(5000);
+        slideL.setVelocity(5000);
+        slideTarget = 900;
+        slideR.setTargetPosition(slideTarget);
+        slideL.setTargetPosition(slideTarget);
+        slideLevel = 1;
+    }
+
+    public void backClaw(int state){
+        if(state == 0)
+            backClaw.setPosition(BACK_CLAW_CLOSED);
+        else
+            backClaw.setPosition(BACK_CLAW_OPENED);
+    }
+
+    public void ending() {
+        wrist.setPosition(0);
+        stopper1.setPosition(0);
+        stopper2.setPosition(0);
+        while (slideR.getCurrentPosition() > 0 && opModeIsActive()) {
+            slideR.setVelocity(3000);
+            slideL.setVelocity(3000);
+            slideR.setTargetPosition(0);
+            slideL.setTargetPosition(0);
         }
     }
 }
+
