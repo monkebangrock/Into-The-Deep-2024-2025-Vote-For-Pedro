@@ -327,6 +327,12 @@ public class PedroBucket extends LinearOpMode {
         runtime.reset();
         opmodeTimer.resetTimer();
         setPathState(0);
+        wrist.setPosition(0.48);
+        claw.setPosition(FRONT_CLAW_OPENED);
+        backWrist.setPosition(0.14);
+        backClaw.setPosition(BACK_CLAW_OPENED);
+        rotWrist.setPosition(rotWristPos);
+        tongue.setPosition(0);
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
