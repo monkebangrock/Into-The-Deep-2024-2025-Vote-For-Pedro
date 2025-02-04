@@ -200,6 +200,7 @@ public class PedroBucket extends LinearOpMode {
                     //slides up, drop into bucket
                     slide(1);
                     backClaw(1);
+                    slide(0);
                     follower.followPath(s1);
                     setPathState(2);
                 }
@@ -217,6 +218,7 @@ public class PedroBucket extends LinearOpMode {
                 if (!follower.isBusy()) {
                     slide(1);
                     backClaw(1);
+                    slide(0);
                     follower.followPath(s2);
                     setPathState(4);
                 }
@@ -235,6 +237,7 @@ public class PedroBucket extends LinearOpMode {
                     //slides up, drop into bucket
                     slide(1);
                     backClaw(1);
+                    slide(0);
                     follower.followPath(s3);
                     setPathState(6);
                 }
@@ -250,6 +253,10 @@ public class PedroBucket extends LinearOpMode {
                 break;
             case 7:
                 if (!follower.isBusy()) {
+                    //slides up, drop into bucket
+                    slide(1);
+                    backClaw(1);
+                    slide(0);
                     //go to park
                     follower.followPath(toPark);
                     ending();
@@ -348,25 +355,26 @@ public class PedroBucket extends LinearOpMode {
         }
     }
 
-    public void slide(int lvl) {
-        if (lvl == 1) {
-            while (slideR.getCurrentPosition() < 2750 && opModeIsActive()) {
-                slideR.setVelocity(3000);
-                slideL.setVelocity(3000);
-                slideR.setTargetPosition(2750);
-                slideL.setTargetPosition(2750);
-            }
-        } else {
-            while (slideR.getCurrentPosition() > 0 && opModeIsActive()) {
-                slideR.setVelocity(3000);
-                slideL.setVelocity(3000);
-                slideR.setTargetPosition(0);
-                slideL.setTargetPosition(0);
-                if (slideR.getCurrentPosition() < 30) {
-                    slideR.setVelocity(0);
-                    slideL.setVelocity(0);
-                }
-            }
+    public void slide(int up) {
+        slideMoving = true;
+        slideInput = true;
+        slideR.setMotorEnable();
+        slideL.setMotorEnable();
+        if (up == 1) {
+            slideTarget = SLIDES_BUCKET_HIGH;
+            slideR.setTargetPosition(slideTarget);
+            slideL.setTargetPosition(slideTarget);
+            slideLevel = 2;
+            telemetry.addData("Level:", "2");
+            telemetry.update();
+        }
+        else if (up == 0) {
+            slideTarget = SLIDES_BUCKET_DOWN;
+            slideR.setTargetPosition(slideTarget);
+            slideL.setTargetPosition(slideTarget);
+            slideLevel = 0;
+            telemetry.addData("Level:", "0");
+            telemetry.update();
         }
     }
 
@@ -457,43 +465,58 @@ public class PedroBucket extends LinearOpMode {
     }
 
     public void transfer() { //fix
-        int target = 190;
-        backClaw.setPosition(0.1);
-        backWrist.setPosition(0.75);
-        rotWrist.setPosition(0.61);
-        wrist.setPosition(0.04);
-        tongue.setPosition(0);
-        while ((slideR.getCurrentPosition() > (target + 10) || slideR.getCurrentPosition() < (target - 10)) && opModeIsActive()) {
-            slideR.setVelocity(1000);
-            slideL.setVelocity(1000);
-            slideR.setTargetPosition(target);
-            slideL.setTargetPosition(target);
-            slideLevel = 0;
-            telemetry.addData("SlideR Pos", slideR.getCurrentPosition());
-            telemetry.addData("SlideR Tgt", slideR.getTargetPosition());
-            telemetry.update();
+        try {
+            //motor first
+            backClaw.setPosition(BACK_CLAW_CLOSED);
+            int target = SLIDES_SPECIMEN_TRANSFER;
+            backWrist.setPosition(0.77);
+            rotWrist.setPosition(FRONT_WRIST_HORIZONTAL);
+            rotWristPos = FRONT_WRIST_HORIZONTAL;
+            wrist.setPosition(0.04);
+            tongue.setPosition(0);
+            tonguePos = 0;
+            while ((slideR.getCurrentPosition() > (target + 5) || slideR.getCurrentPosition() < (target - 5)) && opModeIsActive()) {
+                slideR.setVelocity(1000);
+                slideL.setVelocity(1000);
+                slideR.setTargetPosition(target);
+                slideL.setTargetPosition(target);
+                slideLevel = 0;
+                telemetry.addData("SlideR Pos", slideR.getCurrentPosition());
+                telemetry.addData("SlideR Tgt", slideR.getTargetPosition());
+                telemetry.update();
+            }
+            backClaw.setPosition(BACK_CLAW_OPENED);
+            armTarget = ARM_POS_UP;
+            int curPos = armHinge.getCurrentPosition();
+            while ((curPos < (ARM_POS_UP - 1) || curPos > (ARM_POS_UP + 1)) && opModeIsActive()) {
+                armHinge.setMotorEnable();
+                if(curPos > -300){
+                    armHinge.setVelocity(300);
+                }
+                else if(curPos < -400){
+                    armHinge.setVelocity(1500);
+                }
+                armHinge.setVelocity(800);
+                armHinge.setTargetPosition(ARM_POS_UP);
+                armMoving = true;
+                curPos = armHinge.getCurrentPosition();
+            }
+            backClaw.setPosition(BACK_CLAW_CLOSED);
+            sleep(300);
+            claw.setPosition(FRONT_CLAW_OPENED);
+            sleep(200);
+            backWrist.setPosition(0.14);
+            depositMode = false;
+            // get slide in prep position
+            slideR.setVelocity(5000);
+            slideL.setVelocity(5000);
+            slideR.setTargetPosition(slideTarget);
+            slideL.setTargetPosition(slideTarget);
+            slideLevel = 1;
+            grabbing = false;
+        } catch (Exception ex) {
+
         }
-        armTarget = -245;
-        int curPos = armHinge.getCurrentPosition();
-        while ((curPos < (-245 - 5) || curPos > (-245 + 5)) && opModeIsActive()) {
-            armHinge.setMotorEnable();
-            armHinge.setVelocity(1500);
-            armHinge.setTargetPosition(-245);
-            armMoving = true;
-            curPos = armHinge.getCurrentPosition();
-        }
-        backClaw.setPosition(0.32);
-        sleep(300);
-        claw.setPosition(0.1);
-        sleep(300);
-        backWrist.setPosition(0.16);
-        // get slide in prep position
-        slideR.setVelocity(5000);
-        slideL.setVelocity(5000);
-        slideTarget = 900;
-        slideR.setTargetPosition(slideTarget);
-        slideL.setTargetPosition(slideTarget);
-        slideLevel = 1;
     }
 
     public void backClaw(int state){
