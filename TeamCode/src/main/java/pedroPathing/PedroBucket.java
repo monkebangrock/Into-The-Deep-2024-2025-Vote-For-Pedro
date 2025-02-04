@@ -331,15 +331,34 @@ public class PedroBucket extends LinearOpMode {
 
         // Wait for the game to start (driver presses START)
         waitForStart();
+        waitForStart();
         runtime.reset();
-        opmodeTimer.resetTimer();
-        setPathState(0);
         wrist.setPosition(0.48);
         claw.setPosition(FRONT_CLAW_OPENED);
         backWrist.setPosition(0.14);
-        backClaw.setPosition(BACK_CLAW_OPENED);
+        backClaw.setPosition(BACK_CLAW_CLOSED);
         rotWrist.setPosition(rotWristPos);
+        stopper1.setPosition(STOPPER1_UP);
+        stopper2.setPosition(STOPPER2_UP);
         tongue.setPosition(0);
+        imu.resetYaw();
+
+        slideR.setTargetPosition(0);
+        slideL.setTargetPosition(0);
+        armHinge.setTargetPosition(0);
+        slideR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        slideL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armHinge.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        slideTarget = 0;
+        slideMoving = false;
+        slideLevel = 0;
+        slideInput = false;
+        armTarget = 0;
+        armMoving = false;
+        depositMode = false;
+        grabbing = false;
+        rotWristPos = FRONT_WRIST_HORIZONTAL;
+        tonguePos = 0;
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
