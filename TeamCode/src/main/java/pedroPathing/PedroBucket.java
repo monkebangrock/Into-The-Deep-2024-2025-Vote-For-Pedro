@@ -126,8 +126,9 @@ public class PedroBucket extends LinearOpMode {
      * robot poses
      **/
     private final Pose startPose = new Pose(9, 96, Math.toRadians(0));
-    private final Pose bucketPose = new Pose(12.67, 125.9, Math.toRadians(-45));
-    private final Pose s1Pose = new Pose(29, 118.1, Math.toRadians(0));
+    private final Pose bucketPose = new Pose(15, 123, Math.toRadians(-45));
+    private final Pose bucketForward = new Pose(13,128,Math.toRadians(-45));
+    private final Pose s1Pose = new Pose(29, 119.5, Math.toRadians(0));
     private final Pose s2Pose = new Pose(29, 130.4, Math.toRadians(0));
     private final Pose s3Pose = new Pose(46.2, 123.9, Math.toRadians(90));
     private final Pose park = new Pose(72, 98, Math.toRadians(-90));
@@ -135,13 +136,23 @@ public class PedroBucket extends LinearOpMode {
     /**
      * robot poses
      **/
-    private PathChain bucket, s1, buckets1, s2, buckets2, s3, buckets3, toPark;
+    private PathChain toBucket, bucketAway, bucket, s1, buckets1, s2, buckets2, s3, buckets3, toPark;
 
     /**
      * Build the paths for the auto (adds, for example, constant/linear headings while doing paths)
      * It is necessary to do this so that all the paths are built before the auto starts.
      **/
     public void buildPaths() {
+        toBucket = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(bucketPose),new Point(bucketForward)))
+                .setConstantHeadingInterpolation(-45)
+                .build();
+
+        bucketAway = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(bucketForward),new Point(bucketPose)))
+                .setConstantHeadingInterpolation(-45)
+                .build();
+
         bucket = follower.pathBuilder()
                 .addPath(new BezierLine(new Point(startPose), new Point(bucketPose)))
                 .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-45))
@@ -197,29 +208,27 @@ public class PedroBucket extends LinearOpMode {
                 break;
             case 1:
                 if (!follower.isBusy()) {
-                    //slides up, drop into bucket
+                    //slides up, move closer
                     slide(1);
-                    backClaw(1);
-                    slide(0);
-                    follower.followPath(s1);
+                    follower.followPath(toBucket);
                     setPathState(2);
                 }
                 break;
             case 2:
-                if (!follower.isBusy()) {
-                    //pick up sample, pass to back claw
-                    grab();
-                    transfer();
-                    follower.followPath(buckets1);
+                if (!follower.isBusy()){
+                    //drop, move away
+                    Backshot claw = new Backshot(1);
+                    claw.start();
+                    follower.followPath(bucketAway);
                     setPathState(3);
                 }
                 break;
             case 3:
-                if (!follower.isBusy()) {
-                    slide(1);
-                    backClaw(1);
-                    slide(0);
-                    follower.followPath(s2);
+                if (!follower.isBusy()){
+                    //lower, move
+                    Slides slide = new Slides(0);
+                    slide.start();
+                    follower.followPath(s1);
                     setPathState(4);
                 }
                 break;
@@ -228,35 +237,101 @@ public class PedroBucket extends LinearOpMode {
                     //pick up sample, pass to back claw
                     grab();
                     transfer();
-                    follower.followPath(buckets2);
+                    follower.followPath(buckets1);
                     setPathState(5);
                 }
                 break;
             case 5:
                 if (!follower.isBusy()) {
-                    //slides up, drop into bucket
                     slide(1);
-                    backClaw(1);
-                    slide(0);
-                    follower.followPath(s3);
+                    follower.followPath(toBucket);
                     setPathState(6);
                 }
                 break;
             case 6:
+                if (!follower.isBusy()){
+                    //drop, move away
+                    Backshot claw = new Backshot(1);
+                    claw.start();
+                    follower.followPath(bucketAway);
+                    setPathState(7);
+                }
+                break;
+            case 7:
+                if (!follower.isBusy()){
+                    //move forward, drop
+                    Slides slide = new Slides(0);
+                    slide.start();
+                    follower.followPath(s2);
+                    setPathState(8);
+                }
+                break;
+            case 8:
+                if (!follower.isBusy()) {
+                    //pick up sample, pass to back claw
+                    grab();
+                    transfer();
+                    follower.followPath(buckets2);
+                    setPathState(9);
+                }
+                break;
+            case 9:
+                if (!follower.isBusy()) {
+                    //slides up, drop into bucket
+                    slide(1);
+                    follower.followPath(toBucket);
+                    setPathState(10);
+                }
+                break;
+            case 10:
+                if (!follower.isBusy()){
+                    //drop, move away
+                    Backshot claw = new Backshot(1);
+                    claw.start();
+                    follower.followPath(bucketAway);
+                    setPathState(11);
+                }
+                break;
+            case 11:
+                if (!follower.isBusy()){
+                    //move forward, drop
+                    Slides slide = new Slides(0);
+                    slide.start();
+                    follower.followPath(s3);
+                    setPathState(12);
+                }
+                break;
+            case 12:
                 if (!follower.isBusy()) {
                     //pick up sample, pass to back claw
                     grab2();
                     transfer();
                     follower.followPath(buckets3);
-                    setPathState(7);
+                    setPathState(13);
                 }
                 break;
-            case 7:
+            case 13:
                 if (!follower.isBusy()) {
                     //slides up, drop into bucket
-                    slide(1);
-                    backClaw(1);
-                    slide(0);
+                    slide(1);;
+                    follower.followPath(toBucket);
+                    setPathState(14);
+                }
+                break;
+            case 14:
+                if (!follower.isBusy()){
+                    //drop, move away
+                    Backshot claw = new Backshot(1);
+                    claw.start();
+                    follower.followPath(bucketAway);
+                    setPathState(15);
+                }
+                break;
+            case 15:
+                if (!follower.isBusy()){
+                    //move forward, drop
+                    Slides slide = new Slides(0);
+                    slide.start();
                     //go to park
                     follower.followPath(toPark);
                     ending();
@@ -267,6 +342,61 @@ public class PedroBucket extends LinearOpMode {
 
     }
 
+    public class Backshot extends Thread{
+        private int x;
+        public Backshot(int n){
+            x = n;
+        }
+        public void run(){
+            if(x == 0)
+                backClaw.setPosition(BACK_CLAW_CLOSED);
+            else
+                backClaw.setPosition(BACK_CLAW_OPENED);
+        }
+    }
+
+    public class Slides extends Thread {
+        private int up;
+        public Slides(int n){
+            up = n;
+        }
+        public void run(){
+            try{
+                slideMoving = true;
+                slideInput = true;
+                slideR.setMotorEnable();
+                slideL.setMotorEnable();
+                slideR.setVelocity(5000);
+                slideL.setVelocity(5000);
+                if (up == 1) {
+                    slideTarget = SLIDES_BUCKET_HIGH;
+                    slideR.setTargetPosition(slideTarget);
+                    slideL.setTargetPosition(slideTarget);
+                    while(slideR.getCurrentPosition() <= slideTarget-5 && opModeIsActive()){
+                        telemetry.addData("position", slideR.getCurrentPosition());
+                        telemetry.update();
+                    }
+                    slideLevel = 2;
+                    telemetry.addData("Level:", "2");
+                    telemetry.update();
+                }
+                else if (up == 0) {
+                    slideTarget = SLIDES_BUCKET_DOWN;
+                    slideR.setTargetPosition(slideTarget);
+                    slideL.setTargetPosition(slideTarget);
+                    while(slideR.getCurrentPosition() >= slideTarget+5 && opModeIsActive()){
+                        telemetry.addData("position", slideR.getCurrentPosition());
+                        telemetry.update();
+                    }
+                    slideLevel = 0;
+                    telemetry.addData("Level:", "0");
+                    telemetry.update();
+                }
+            }catch(Exception e){
+
+            }
+        }
+    }
     /**
      * These change the states of the paths and actions
      * It will also reset the timers of the individual switches
@@ -379,10 +509,16 @@ public class PedroBucket extends LinearOpMode {
         slideInput = true;
         slideR.setMotorEnable();
         slideL.setMotorEnable();
+        slideR.setVelocity(5000);
+        slideL.setVelocity(5000);
         if (up == 1) {
             slideTarget = SLIDES_BUCKET_HIGH;
             slideR.setTargetPosition(slideTarget);
             slideL.setTargetPosition(slideTarget);
+            while(slideR.getCurrentPosition() <= slideTarget-5 && opModeIsActive()){
+                telemetry.addData("position", slideR.getCurrentPosition());
+                telemetry.update();
+            }
             slideLevel = 2;
             telemetry.addData("Level:", "2");
             telemetry.update();
@@ -391,6 +527,10 @@ public class PedroBucket extends LinearOpMode {
             slideTarget = SLIDES_BUCKET_DOWN;
             slideR.setTargetPosition(slideTarget);
             slideL.setTargetPosition(slideTarget);
+            while(slideR.getCurrentPosition() >= slideTarget+5 && opModeIsActive()){
+                telemetry.addData("position", slideR.getCurrentPosition());
+                telemetry.update();
+            }
             slideLevel = 0;
             telemetry.addData("Level:", "0");
             telemetry.update();
