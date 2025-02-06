@@ -122,15 +122,15 @@ public class PedroSpecimen extends LinearOpMode {
     private final Pose hangPose = new Pose(36.2, 72, Math.toRadians(180));
     private final Pose s1Pose = new Pose(68, 27, Math.toRadians(180));
     private final Pose s1CP1 = new Pose(14, 13);
-    private final Pose s1CP2 = new Pose(62, 45);
-    private final Pose corner = new Pose(10, 24, Math.toRadians(180));
-    private final Pose s2Pose = new Pose(65, 11, Math.toRadians(180));
-    private final Pose s2CP1 = new Pose(62, 34);
+    private final Pose s1CP2 = new Pose(63, 54);
+    private final Pose corner = new Pose(15, 24, Math.toRadians(180));
+    private final Pose s2Pose = new Pose(65, 16, Math.toRadians(180));
+    private final Pose s2CP1 = new Pose(62, 37);
     private final Pose betweenCP = new Pose(21, 55);
     /**
      * robot poses
      **/
-    private PathChain hang1, s1, s1Push, s2, s2Push, hang2, toCorner;
+    private PathChain hang1, s1, s1Push, s2, s2Push, hang2, toCorner, park;
 
     /**
      * Build the paths for the auto (adds, for example, constant/linear headings while doing paths)
@@ -170,6 +170,11 @@ public class PedroSpecimen extends LinearOpMode {
         toCorner = follower.pathBuilder()
                 .addPath(new BezierCurve(new Point(hangPose), new Point(betweenCP), new Point(corner)))
                 .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(0))
+                .build();
+
+        park = follower.pathBuilder()
+                .addPath(new BezierCurve(new Point(hangPose), new Point(betweenCP), new Point(corner)))
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                 .build();
     }
 
@@ -234,7 +239,7 @@ public class PedroSpecimen extends LinearOpMode {
             case 8:
                 if (!follower.isBusy()) {
                     //hang, then park
-                    follower.followPath(toCorner);
+                    follower.followPath(park);
                     ending();
                     setPathState(-1);
                 }
