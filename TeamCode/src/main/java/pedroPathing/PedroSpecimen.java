@@ -122,7 +122,7 @@ public class PedroSpecimen extends LinearOpMode {
     private final Pose hangPose = new Pose(36.2, 72, Math.toRadians(180));
     private final Pose s1Pose = new Pose(68, 27, Math.toRadians(180));
     private final Pose s1CP1 = new Pose(14, 13);
-    private final Pose s1CP2 = new Pose(63, 54);
+    private final Pose s1CP2 = new Pose(63, 50);
     private final Pose corner = new Pose(15, 24, Math.toRadians(180));
     private final Pose s2Pose = new Pose(65, 16, Math.toRadians(180));
     private final Pose s2CP1 = new Pose(62, 37);
