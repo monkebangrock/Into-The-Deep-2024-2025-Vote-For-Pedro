@@ -186,7 +186,7 @@ public class PedroSpecimen extends LinearOpMode {
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
-                follower.setMaxPower(0.3);
+                follower.setMaxPower(0.5);
                 follower.followPath(hang1);
                 setPathState(1);
                 break;
