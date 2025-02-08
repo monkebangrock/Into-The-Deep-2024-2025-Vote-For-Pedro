@@ -73,14 +73,14 @@ public class PedroBucket extends LinearOpMode {
     final double FRONT_CLAW_CLOSED = 0.31;
     final double BACK_CLAW_OPENED = 0.1;
     final double BACK_CLAW_CLOSED = 0.33;
-    final int ARM_POS_UP = -190;
+    final int ARM_POS_UP = -195;
     final int ARM_POS_DOWN = -750;
     final int ARM_POS_TILT = -1310;
     final int SLIDES_BUCKET_DOWN = 0;
     final int SLIDES_BUCKET_LOW = 1730;
     final int SLIDES_BUCKET_HIGH = 3100;
     final int SLIDES_SPECIMEN_DOWN = 100;
-    final int SLIDES_SPECIMEN_TRANSFER = 780;
+    final int SLIDES_SPECIMEN_TRANSFER = 750;
     final int SLIDES_SPECIMEN_PREP_HANG = 1450;
     final int SLIDES_ROBOT_HANG = 1450;
     final double FRONT_WRIST_HORIZONTAL = 0.61;
@@ -131,7 +131,7 @@ public class PedroBucket extends LinearOpMode {
     private final Pose s1Pose = new Pose(28, 121, Math.toRadians(0));
     private final Pose s2Pose = new Pose(28, 131, Math.toRadians(0));
     private final Pose s3Pose = new Pose(46, 124, Math.toRadians(90));
-    private final Pose park = new Pose(72, 96, Math.toRadians(-90));
+    private final Pose park = new Pose(72, 94, Math.toRadians(-90));
     private final Pose parkCP = new Pose(75, 132, Math.toRadians(0));
     /**
      * robot poses
@@ -302,6 +302,7 @@ public class PedroBucket extends LinearOpMode {
                     follower.followPath(toPark);
                     ending();
                     setPathState(-1);
+                    ending2();
                 }
                 break;
         }
@@ -674,19 +675,26 @@ public class PedroBucket extends LinearOpMode {
     }
 
     public void ending() {
+        wrist.setPosition(0.7);
+        stopper1.setPosition(0);
+        stopper2.setPosition(0);
         tongue.setPosition(0.35);
-        while (armHinge.getCurrentPosition() > -245 && opModeIsActive()) {
+        /*while (armHinge.getCurrentPosition() > -245 && opModeIsActive()) {
             armHinge.setVelocity(3000);
             armHinge.setTargetPosition(-250);
         }
-        wrist.setPosition(0);
-        stopper1.setPosition(0);
-        stopper2.setPosition(0);
         while (slideR.getCurrentPosition() > 0 && opModeIsActive()) {
             slideR.setVelocity(3000);
             slideL.setVelocity(3000);
             slideR.setTargetPosition(0);
             slideL.setTargetPosition(0);
+        }*/
+    }
+
+    public void ending2(){
+        while (armHinge.getCurrentPosition() > -245 && opModeIsActive()) {
+            armHinge.setVelocity(3000);
+            armHinge.setTargetPosition(-250);
         }
     }
 }

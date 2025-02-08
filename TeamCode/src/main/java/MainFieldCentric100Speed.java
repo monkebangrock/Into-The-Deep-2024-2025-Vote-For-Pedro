@@ -116,14 +116,14 @@ public class MainFieldCentric100Speed extends LinearOpMode {
     final double FRONT_CLAW_CLOSED = 0.31;
     final double BACK_CLAW_OPENED = 0.1;
     final double BACK_CLAW_CLOSED = 0.33;
-    final int ARM_POS_UP = -180;
+    final int ARM_POS_UP = -190;
     final int ARM_POS_DOWN = -750;
     final int ARM_POS_TILT = -1310;
     final int SLIDES_BUCKET_DOWN = 0;
     final int SLIDES_BUCKET_LOW = 1730;
     final int SLIDES_BUCKET_HIGH = 3100;
     final int SLIDES_SPECIMEN_DOWN = 100;
-    final int SLIDES_SPECIMEN_TRANSFER = 640;
+    final int SLIDES_SPECIMEN_TRANSFER = 750;
     final int SLIDES_SPECIMEN_PREP_HANG = 1450;
     final int SLIDES_ROBOT_HANG = 1450;
     final double FRONT_WRIST_HORIZONTAL = 0.61;
@@ -739,13 +739,13 @@ public class MainFieldCentric100Speed extends LinearOpMode {
     public void rotWrist(){
         if (rotWrist.getPosition() < 1 && gamepad2.left_stick_x < 0){
             // Go right
-            rotWristPos += 0.01;
+            rotWristPos += 0.03;
             rotWrist.setPosition(rotWristPos);
             //upDown.setVelocity(500*upness);
         }
         else if (gamepad2.left_stick_x > 0 && rotWrist.getPosition() > 0){
             // Go left
-            rotWristPos -= 0.01;
+            rotWristPos -= 0.03;
             rotWrist.setPosition(rotWristPos);
             //upDown.setVelocity(500*upness);
         }
@@ -776,6 +776,7 @@ public class MainFieldCentric100Speed extends LinearOpMode {
         public void run() {
             try {
                 //motor first
+                claw.setPosition(FRONT_CLAW_CLOSED);
                 backClaw.setPosition(BACK_CLAW_CLOSED);
                 int target = SLIDES_SPECIMEN_TRANSFER;
                 backWrist.setPosition(0.77);
