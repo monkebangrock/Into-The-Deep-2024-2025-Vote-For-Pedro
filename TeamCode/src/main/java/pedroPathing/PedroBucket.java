@@ -80,7 +80,7 @@ public class PedroBucket extends LinearOpMode {
     final int SLIDES_BUCKET_LOW = 1730;
     final int SLIDES_BUCKET_HIGH = 3100;
     final int SLIDES_SPECIMEN_DOWN = 100;
-    final int SLIDES_SPECIMEN_TRANSFER = 750;
+    final int SLIDES_SPECIMEN_TRANSFER = 740;
     final int SLIDES_SPECIMEN_PREP_HANG = 1450;
     final int SLIDES_ROBOT_HANG = 1450;
     final double FRONT_WRIST_HORIZONTAL = 0.61;
@@ -88,6 +88,10 @@ public class PedroBucket extends LinearOpMode {
     final double STOPPER2_DOWN = 0.74;    // offset seems slightly different on 2
     final double STOPPER1_UP = 0.0;
     final double STOPPER2_UP = 0.0;
+    final double TONGUE_MIN_POS = 0.0;
+    final double TONGUE_TRANSFER_POS = 0.2;
+    final double TONGUE_MAX_POS = 0.67;
+
 
     // Calculate the COUNTS_PER_INCH for your specific drive train.
     // Go to your motor vendor website to determine your motor's COUNTS_PER_MOTOR_REV
@@ -108,7 +112,7 @@ public class PedroBucket extends LinearOpMode {
     private int pathState;
     private Timer timer = new Timer();
 
-    double tonguePos = 0.0;
+    double tonguePos = TONGUE_MIN_POS;
     double rotWristPos = FRONT_WRIST_HORIZONTAL;
     boolean grabbing = false;
     boolean depositMode = false;
@@ -312,8 +316,8 @@ public class PedroBucket extends LinearOpMode {
     public class GrabSample extends Thread{
         public void run(){
             try{
-                tongue.setPosition(0);
-                claw.setPosition(0.1);
+                tongue.setPosition(TONGUE_MIN_POS);
+                claw.setPosition(FRONT_CLAW_OPENED);
                 wrist.setPosition(0.7);
                 armTarget = -810;
                 int curPos = armHinge.getCurrentPosition();
@@ -324,7 +328,7 @@ public class PedroBucket extends LinearOpMode {
                     armMoving = true;
                     curPos = armHinge.getCurrentPosition();
                 }
-                claw.setPosition(0.32);
+                claw.setPosition(FRONT_CLAW_CLOSED);
             }catch(Exception e){
 
             }
@@ -459,7 +463,7 @@ public class PedroBucket extends LinearOpMode {
         rotWrist.setPosition(rotWristPos);
         stopper1.setPosition(STOPPER1_UP);
         stopper2.setPosition(STOPPER2_UP);
-        tongue.setPosition(0);
+        tongue.setPosition(TONGUE_MIN_POS);
         imu.resetYaw();
 
         slideR.setTargetPosition(0);
@@ -477,7 +481,7 @@ public class PedroBucket extends LinearOpMode {
         depositMode = false;
         grabbing = false;
         rotWristPos = FRONT_WRIST_HORIZONTAL;
-        tonguePos = 0;
+        tonguePos = TONGUE_MIN_POS;
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
@@ -548,7 +552,7 @@ public class PedroBucket extends LinearOpMode {
     }
 
     public void grab() {
-        tongue.setPosition(0);
+        tongue.setPosition(TONGUE_MIN_POS);
         claw.setPosition(0.1);
         wrist.setPosition(0.7);
         armTarget = -810;
@@ -565,7 +569,7 @@ public class PedroBucket extends LinearOpMode {
     }
 
     public void grab2() {
-        tongue.setPosition(0);
+        tongue.setPosition(TONGUE_MIN_POS);
         claw.setPosition(0.1);
         wrist.setPosition(0.7);
         rotWrist.setPosition(0.11);
@@ -621,8 +625,8 @@ public class PedroBucket extends LinearOpMode {
             rotWrist.setPosition(FRONT_WRIST_HORIZONTAL);
             rotWristPos = FRONT_WRIST_HORIZONTAL;
             wrist.setPosition(0.04);
-            tongue.setPosition(0);
-            tonguePos = 0;
+            tongue.setPosition(TONGUE_MIN_POS);
+            tonguePos = TONGUE_MIN_POS;
             while ((slideR.getCurrentPosition() > (target + 5) || slideR.getCurrentPosition() < (target - 5)) && opModeIsActive()) {
                 slideR.setVelocity(1000);
                 slideL.setVelocity(1000);
@@ -675,10 +679,11 @@ public class PedroBucket extends LinearOpMode {
     }
 
     public void ending() {
-        wrist.setPosition(0.7);
+        wrist.setPosition(0.5);
         stopper1.setPosition(0);
         stopper2.setPosition(0);
-        tongue.setPosition(0.35);
+        tongue.setPosition(TONGUE_MAX_POS);
+        claw.setPosition(FRONT_CLAW_CLOSED);
         /*while (armHinge.getCurrentPosition() > -245 && opModeIsActive()) {
             armHinge.setVelocity(3000);
             armHinge.setTargetPosition(-250);
