@@ -116,14 +116,14 @@ public class MainFieldCentric60Speed extends LinearOpMode {
     final double FRONT_CLAW_CLOSED = 0.31;
     final double BACK_CLAW_OPENED = 0.1;
     final double BACK_CLAW_CLOSED = 0.33;
-    final int ARM_POS_UP = -180;
+    final int ARM_POS_UP = -190;
     final int ARM_POS_DOWN = -750;
     final int ARM_POS_TILT = -1310;
     final int SLIDES_BUCKET_DOWN = 0;
     final int SLIDES_BUCKET_LOW = 1730;
     final int SLIDES_BUCKET_HIGH = 3100;
     final int SLIDES_SPECIMEN_DOWN = 100;
-    final int SLIDES_SPECIMEN_TRANSFER = 640;
+    final int SLIDES_SPECIMEN_TRANSFER = 740;
     final int SLIDES_SPECIMEN_PREP_HANG = 1450;
     final int SLIDES_ROBOT_HANG = 1450;
     final double FRONT_WRIST_HORIZONTAL = 0.61;
@@ -131,6 +131,10 @@ public class MainFieldCentric60Speed extends LinearOpMode {
     final double STOPPER2_DOWN = 0.74;    // offset seems slightly different on 2
     final double STOPPER1_UP = 0.0;
     final double STOPPER2_UP = 0.0;
+    final double TONGUE_MIN_POS = 0.0;
+    final double TONGUE_TRANSFER_POS = 0.2;
+    final double TONGUE_MAX_POS = 0.67;
+
 
 
 
@@ -196,7 +200,7 @@ public class MainFieldCentric60Speed extends LinearOpMode {
         guidePressed = false;
         grabbing = false;
         rotWristPos = FRONT_WRIST_HORIZONTAL;
-        tonguePos = 0;
+        tonguePos = TONGUE_MIN_POS;
 
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -248,7 +252,7 @@ public class MainFieldCentric60Speed extends LinearOpMode {
         rotWrist.setPosition(rotWristPos);
         stopper1.setPosition(STOPPER1_UP);
         stopper2.setPosition(STOPPER2_UP);
-        tongue.setPosition(0);
+        tongue.setPosition(TONGUE_MIN_POS);
         leftFrontDrive.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         leftBackDrive.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         rightFrontDrive.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
@@ -327,7 +331,7 @@ public class MainFieldCentric60Speed extends LinearOpMode {
             telemetry.addData("otos heading:", Math.toRadians(otos.getPosition().h));
             telemetry.addData("imu output: ",imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
             telemetry.addData("arm pos", armHinge.getCurrentPosition());
-            telemetry.addData("tgt pos", armHinge.getTargetPosition());
+            telemetry.addData("tongue pos", tongue.getPosition());
             telemetry.update();
         }
     }
@@ -555,19 +559,15 @@ public class MainFieldCentric60Speed extends LinearOpMode {
             // turn off motor if arm is up, and not commanded to move
             armHinge.setMotorDisable();
         }
-        telemetry.addData("arm pos", armHinge.getCurrentPosition());
-        telemetry.addData("tgt pos", armHinge.getTargetPosition());
-        telemetry.update();
     }
 
     public void tongue(){
         if (gamepad2.left_bumper && tonguePos > 0) {
             tonguePos -= 0.01;
-        } else if (gamepad2.right_bumper && tonguePos <0.37) {
+        } else if (gamepad2.right_bumper && tonguePos <TONGUE_MAX_POS) {
             tonguePos += 0.01;
         }
         tongue.setPosition(tonguePos);
-
     }
 
     public void grabDeposit(){
@@ -651,7 +651,7 @@ public class MainFieldCentric60Speed extends LinearOpMode {
                     rightBackDrive.setVelocity(200);
 
                     // Set the arm and wrist in position to push down
-                    tongue.setPosition(0.2);
+                    tongue.setPosition(TONGUE_TRANSFER_POS);
                     wrist.setPosition(0);
 
                     sleep(1000);
@@ -739,13 +739,13 @@ public class MainFieldCentric60Speed extends LinearOpMode {
     public void rotWrist(){
         if (rotWrist.getPosition() < 1 && gamepad2.left_stick_x < 0){
             // Go right
-            rotWristPos += 0.01;
+            rotWristPos += 0.03;
             rotWrist.setPosition(rotWristPos);
             //upDown.setVelocity(500*upness);
         }
         else if (gamepad2.left_stick_x > 0 && rotWrist.getPosition() > 0){
             // Go left
-            rotWristPos -= 0.01;
+            rotWristPos -= 0.03;
             rotWrist.setPosition(rotWristPos);
             //upDown.setVelocity(500*upness);
         }
@@ -776,14 +776,15 @@ public class MainFieldCentric60Speed extends LinearOpMode {
         public void run() {
             try {
                 //motor first
+                claw.setPosition(FRONT_CLAW_CLOSED);
                 backClaw.setPosition(BACK_CLAW_CLOSED);
                 int target = SLIDES_SPECIMEN_TRANSFER;
                 backWrist.setPosition(0.77);
                 rotWrist.setPosition(FRONT_WRIST_HORIZONTAL);
                 rotWristPos = FRONT_WRIST_HORIZONTAL;
                 wrist.setPosition(0.04);
-                tongue.setPosition(0);
-                tonguePos = 0;
+                tongue.setPosition(TONGUE_MIN_POS);
+                tonguePos = TONGUE_MIN_POS;
                 while ((slideR.getCurrentPosition() > (target + 5) || slideR.getCurrentPosition() < (target - 5)) && opModeIsActive()) {
                     slideR.setVelocity(1000);
                     slideL.setVelocity(1000);
@@ -838,8 +839,8 @@ public class MainFieldCentric60Speed extends LinearOpMode {
         @Override
         public void run() {
             try {
-                tongue.setPosition(0.2);
-                tonguePos = 0.2;
+                tongue.setPosition(TONGUE_TRANSFER_POS);
+                tonguePos = TONGUE_TRANSFER_POS;
                 claw.setPosition(FRONT_CLAW_OPENED);
                 wrist.setPosition(0.7);
                 armTarget = ARM_POS_DOWN;

@@ -123,7 +123,7 @@ public class FC_POST_AUTO_100_SPEED extends LinearOpMode {
     final int SLIDES_BUCKET_LOW = 1730;
     final int SLIDES_BUCKET_HIGH = 3100;
     final int SLIDES_SPECIMEN_DOWN = 100;
-    final int SLIDES_SPECIMEN_TRANSFER = 750;
+    final int SLIDES_SPECIMEN_TRANSFER = 740;
     final int SLIDES_SPECIMEN_PREP_HANG = 1450;
     final int SLIDES_ROBOT_HANG = 1450;
     final double FRONT_WRIST_HORIZONTAL = 0.61;
@@ -131,6 +131,10 @@ public class FC_POST_AUTO_100_SPEED extends LinearOpMode {
     final double STOPPER2_DOWN = 0.74;    // offset seems slightly different on 2
     final double STOPPER1_UP = 0.0;
     final double STOPPER2_UP = 0.0;
+    final double TONGUE_MIN_POS = 0.0;
+    final double TONGUE_TRANSFER_POS = 0.2;
+    final double TONGUE_MAX_POS = 0.67;
+
 
 
 
@@ -166,7 +170,6 @@ public class FC_POST_AUTO_100_SPEED extends LinearOpMode {
         //slideR.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         //slideL.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         //armHinge.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-
         //brake motors
         leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -197,7 +200,7 @@ public class FC_POST_AUTO_100_SPEED extends LinearOpMode {
         guidePressed = false;
         grabbing = false;
         rotWristPos = FRONT_WRIST_HORIZONTAL;
-        tonguePos = 0;
+        tonguePos = TONGUE_MIN_POS;
 
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -249,7 +252,7 @@ public class FC_POST_AUTO_100_SPEED extends LinearOpMode {
         rotWrist.setPosition(rotWristPos);
         stopper1.setPosition(STOPPER1_UP);
         stopper2.setPosition(STOPPER2_UP);
-        tongue.setPosition(0);
+        tongue.setPosition(TONGUE_MIN_POS);
         leftFrontDrive.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         leftBackDrive.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         rightFrontDrive.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
@@ -328,7 +331,7 @@ public class FC_POST_AUTO_100_SPEED extends LinearOpMode {
             telemetry.addData("otos heading:", Math.toRadians(otos.getPosition().h));
             telemetry.addData("imu output: ",imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
             telemetry.addData("arm pos", armHinge.getCurrentPosition());
-            telemetry.addData("tgt pos", armHinge.getTargetPosition());
+            telemetry.addData("tongue pos", tongue.getPosition());
             telemetry.update();
         }
     }
@@ -556,19 +559,15 @@ public class FC_POST_AUTO_100_SPEED extends LinearOpMode {
             // turn off motor if arm is up, and not commanded to move
             armHinge.setMotorDisable();
         }
-        telemetry.addData("arm pos", armHinge.getCurrentPosition());
-        telemetry.addData("tgt pos", armHinge.getTargetPosition());
-        telemetry.update();
     }
 
     public void tongue(){
         if (gamepad2.left_bumper && tonguePos > 0) {
             tonguePos -= 0.01;
-        } else if (gamepad2.right_bumper && tonguePos <0.37) {
+        } else if (gamepad2.right_bumper && tonguePos <TONGUE_MAX_POS) {
             tonguePos += 0.01;
         }
         tongue.setPosition(tonguePos);
-
     }
 
     public void grabDeposit(){
@@ -652,7 +651,7 @@ public class FC_POST_AUTO_100_SPEED extends LinearOpMode {
                     rightBackDrive.setVelocity(200);
 
                     // Set the arm and wrist in position to push down
-                    tongue.setPosition(0.2);
+                    tongue.setPosition(TONGUE_TRANSFER_POS);
                     wrist.setPosition(0);
 
                     sleep(1000);
@@ -784,8 +783,8 @@ public class FC_POST_AUTO_100_SPEED extends LinearOpMode {
                 rotWrist.setPosition(FRONT_WRIST_HORIZONTAL);
                 rotWristPos = FRONT_WRIST_HORIZONTAL;
                 wrist.setPosition(0.04);
-                tongue.setPosition(0);
-                tonguePos = 0;
+                tongue.setPosition(TONGUE_MIN_POS);
+                tonguePos = TONGUE_MIN_POS;
                 while ((slideR.getCurrentPosition() > (target + 5) || slideR.getCurrentPosition() < (target - 5)) && opModeIsActive()) {
                     slideR.setVelocity(1000);
                     slideL.setVelocity(1000);
@@ -840,8 +839,8 @@ public class FC_POST_AUTO_100_SPEED extends LinearOpMode {
         @Override
         public void run() {
             try {
-                tongue.setPosition(0.2);
-                tonguePos = 0.2;
+                tongue.setPosition(TONGUE_TRANSFER_POS);
+                tonguePos = TONGUE_TRANSFER_POS;
                 claw.setPosition(FRONT_CLAW_OPENED);
                 wrist.setPosition(0.7);
                 armTarget = ARM_POS_DOWN;
