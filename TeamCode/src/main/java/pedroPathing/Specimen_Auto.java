@@ -78,7 +78,8 @@ public class Specimen_Auto extends LinearOpMode {
     static final double DRIVE_GEAR_REDUCTION = 1.0;     // No External Gearing.
     static final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
-            (WHEEL_DIAMETER_INCHES * 3.1415);final double FRONT_CLAW_OPENED = 0.1;
+            (WHEEL_DIAMETER_INCHES * 3.1415);
+    final double FRONT_CLAW_OPENED = 0.1;
     final double FRONT_CLAW_CLOSED = 0.31;
     final double BACK_CLAW_OPENED = 0.1;
     final double BACK_CLAW_CLOSED = 0.33;
@@ -90,8 +91,10 @@ public class Specimen_Auto extends LinearOpMode {
     final double STOPPER1_UP = 0.0;
     final double STOPPER2_UP = 0.0;
 
-    /** This is the variable where we store the state of our auto.
-     * It is used by the pathUpdate method. */
+    /**
+     * This is the variable where we store the state of our auto.
+     * It is used by the pathUpdate method.
+     */
     private int pathState;
     private Timer timer = new Timer();
 
@@ -104,26 +107,35 @@ public class Specimen_Auto extends LinearOpMode {
      * Lets assume our robot is 18 by 18 inches
      * Lets assume the Robot is facing the human player and we want to score in the bucket */
 
-    /** Start Pose of our robot */
+    /**
+     * Start Pose of our robot
+     */
     private final Pose startPose = new Pose(9, 72, Math.toRadians(180));
 
-    /** Scoring Pose of our robot. It is facing the submersible at a -45 degree (315 degree) angle. */
-    private final Pose sample0scorePose = new Pose(36.2
-            , 72, Math.toRadians(180));
-    private final Pose sample1scorePose = new Pose(34, 71, Math.toRadians(180));
-    private final Pose sample2scorePose = new Pose(34, 70, Math.toRadians(180));
+    /**
+     * Scoring Pose of our robot. It is facing the submersible at a -45 degree (315 degree) angle.
+     */
+    private final Pose sample0scorePose = new Pose(36.2, 72, Math.toRadians(180));
+    private final Pose sample1scorePose = new Pose(36.2, 71, Math.toRadians(180));
+    private final Pose sample2scorePose = new Pose(36.2, 70, Math.toRadians(180));
 
 
-    /** Lowest (First) Sample from the Spike Mark */
+    /**
+     * Lowest (First) Sample from the Spike Mark
+     */
     private final Pose specimenPickupPose = new Pose(11, 24, Math.toRadians(180));
 
-    /** Middle (Second) Sample from the Spike Mark */
+    /**
+     * Middle (Second) Sample from the Spike Mark
+     */
     private final Pose sample1Pose = new Pose(60, 33, Math.toRadians(180));
     private final Pose sample1CP1 = new Pose(19, 10);
     private final Pose sample1CP2 = new Pose(65, 60);
-    private final Pose pushSample1Pose = new Pose(14, 15, Math.toRadians(0));
+    private final Pose pushSample1Pose = new Pose(17, 17, Math.toRadians(0));
 
-    /** Highest (Third) Sample from the Spike Mark */
+    /**
+     * Highest (Third) Sample from the Spike Mark
+     */
     private final Pose sample2CP1 = new Pose(72, 33);
     private final Pose sample2CP2 = new Pose(72, 11);
     private final Pose pushSample2Pose = new Pose(20, 16, Math.toRadians(0));
@@ -133,19 +145,25 @@ public class Specimen_Auto extends LinearOpMode {
     private final Pose pushSample3Pose = new Pose(20, 9);
 
 
-    /** Park Pose for our robot, after we do all of the scoring. */
+    /**
+     * Park Pose for our robot, after we do all of the scoring.
+     */
     private final Pose parkPose = new Pose(60, 98, Math.toRadians(90));
 
-    /** Park Control Pose for our robot, this is used to manipulate the bezier curve that we will create for the parking.
-     * The Robot will not go to this pose, it is used a control point for our bezier curve. */
+    /**
+     * Park Control Pose for our robot, this is used to manipulate the bezier curve that we will create for the parking.
+     * The Robot will not go to this pose, it is used a control point for our bezier curve.
+     */
     private final Pose parkControlPose = new Pose(60, 98, Math.toRadians(90));
 
     /* These are our Paths and PathChains that we will define in buildPaths() */
     private Path scorePreload, park;
-    private PathChain pushSample1, pushSample2, pushSample3, scoreSpecimen1, scoreSpecimen2, scoreSpecimen3;
+    private PathChain pushSample1, pushSample2, grabSample1, scoreSpecimen1, scoreSpecimen2, scoreSpecimen3;
 
-    /** Build the paths for the auto (adds, for example, constant/linear headings while doing paths)
-     * It is necessary to do this so that all the paths are built before the auto starts. **/
+    /**
+     * Build the paths for the auto (adds, for example, constant/linear headings while doing paths)
+     * It is necessary to do this so that all the paths are built before the auto starts.
+     **/
     public void buildPaths() {
 
         /* There are two major types of paths components: BezierCurves and BezierLines.
@@ -179,20 +197,20 @@ public class Specimen_Auto extends LinearOpMode {
                 .setConstantHeadingInterpolation(Math.toRadians(0))
                 .build();
 
+        grabSample1 = follower.pathBuilder()
+                .addPath(new BezierCurve(new Point(pushSample1Pose), new Point(specimenPickupPose)))
+                .setConstantHeadingInterpolation(Math.toRadians(0))
+                .build();
+
         /* This is our scorePickup1 PathChain. We are using a single path with a BezierLine, which is a straight line. */
-        /*scoreSpecimen1 = follower.pathBuilder()
-                .addPath(new BezierLine(new Point(pushSample1Pose), new Point(sample1scorePose)))
+        scoreSpecimen1 = follower.pathBuilder()
+                .addPath(new BezierLine(new Point(specimenPickupPose), new Point(sample1scorePose)))
                 .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(180))
-                .build();*/
+                .build();
 
         /* This is our grabPickup2 PathChain. We are using a single path with a BezierLine, which is a straight line. */
         pushSample2 = follower.pathBuilder()
                 .addPath(new BezierCurve(new Point(pushSample1Pose), new Point(sample2CP1), new Point(sample2CP2), new Point(pushSample2Pose)))
-                .setConstantHeadingInterpolation(Math.toRadians(0))
-                .build();
-
-        pushSample3 = follower.pathBuilder()
-                .addPath(new BezierCurve(new Point(pushSample2Pose), new Point(sample3CP1), new Point(sample3Pose), new Point(pushSample3Pose)))
                 .setConstantHeadingInterpolation(Math.toRadians(0))
                 .build();
 
@@ -219,15 +237,18 @@ public class Specimen_Auto extends LinearOpMode {
         //park.setLinearHeadingInterpolation(scorePose.getHeading(), parkPose.getHeading());
     }
 
-    /** This switch is called continuously and runs the pathing, at certain points, it triggers the action state.
+    /**
+     * This switch is called continuously and runs the pathing, at certain points, it triggers the action state.
      * Everytime the switch changes case, it will reset the timer. (This is because of the setPathState() method)
-     * The followPath() function sets the follower to run the specific path, but does NOT wait for it to finish before moving on. */
+     * The followPath() function sets the follower to run the specific path, but does NOT wait for it to finish before moving on.
+     */
     public void autonomousPathUpdate() {
+        StoppersDown s = new StoppersDown();
         switch (pathState) {
             case 0:
-                stoppersDown();
                 follower.setMaxPower(0.3);
                 follower.followPath(scorePreload);
+                s.start();
                 setPathState(1);
                 break;
             case 1:
@@ -239,87 +260,86 @@ public class Specimen_Auto extends LinearOpMode {
                 */
 
                 /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
-                if(!follower.isBusy()) {
+                if (!follower.isBusy()) {
                     /* Score Preload */
+                    sleep(300);
                     specimenHang();
                     follower.setMaxPower(1);
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
-                    follower.followPath(pushSample1,true);
-                    ending();
+                    follower.followPath(pushSample1, true);
                     setPathState(2);
                 }
                 break;
-            //case 2:
+            case 2:
                 /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup1Pose's position */
-                //if(!follower.isBusy()) {
+                if (!follower.isBusy()) {
                     /* Grab Sample */
-                    //wallGrab();
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
-                    /*follower.followPath(pushSample2,true);
+                    follower.followPath(grabSample1, true);
                     setPathState(3);
                 }
                 break;
             case 3:
                 /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
-                //if(!follower.isBusy()) {
+                if(!follower.isBusy()) {
                     /* Score Sample */
-                    //specimenHang();
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
-                    /*follower.followPath(pushSample3,true);
-                    setPathState(4);
-                }
-                break;
-            case 4:
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup2Pose's position */
-                //if(!follower.isBusy()) {
-                    /* Grab Sample */
-                    //wallGrab();
+                    follower.setMaxPower(0.5);
+                    wallGrab();
+                    s.start();
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
-                    //follower.followPath(scoreSpecimen2,true);
+                    follower.followPath(scoreSpecimen1, true);
+                    setPathState(4);
+                    break;
+                }
+            //case 4:
+            /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup2Pose's position */
+            //if(!follower.isBusy()) {
+            /* Grab Sample */
+            //wallGrab();
+            /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
+            //follower.followPath(scoreSpecimen2,true);
                     /*setPathState(5);
                 }
                 break;
             case 5:
                 /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
-                //if(!follower.isBusy()) {
-                    /* Score Sample */
-                    //specimenHang();
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
-                    //follower.followPath(grabPickup3,true);
+            //if(!follower.isBusy()) {
+            /* Score Sample */
+            //specimenHang();
+            /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
+            //follower.followPath(grabPickup3,true);
                     /*setPathState(6);
                 }
                 break;
             case 6:
                 /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup3Pose's position */
-                //if(!follower.isBusy()) {
-                    /* Grab Sample */
+            //if(!follower.isBusy()) {
+            /* Grab Sample */
 
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
+            /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
                     /*follower.followPath(scorePickup3, true);
                     setPathState(7);
                 }
                 break;
             case 7:
                 /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
-                //if(!follower.isBusy()) {
-                    /* Score Sample */
+            //if(!follower.isBusy()) {
+            /* Score Sample */
 
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are parked */
+            /* Since this is a pathChain, we can have Pedro hold the end point while we are parked */
                     /*follower.followPath(park,true);
                     setPathState(8);
                 }
                 break;
             case 8:
                 /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
-                //if(!follower.isBusy()) {
-                    /* Level 1 Ascent */
+            //if(!follower.isBusy()) {
+            /* Level 1 Ascent */
 
-                    /* Set the state to a Case we won't use or define, so it just stops running an new paths */
+            /* Set the state to a Case we won't use or define, so it just stops running an new paths */
                     /*setPathState(-1);
                 }
                 break;*/
         }
-
     }
 
     /** These change the states of the paths and actions
@@ -431,7 +451,7 @@ public class Specimen_Auto extends LinearOpMode {
         while (slideR.getCurrentPosition() > SLIDES_SPECIMEN_DOWN +5 && opModeIsActive()) {
             stopper1.setPosition(0);
             stopper2.setPosition(0);
-            backWrist.setPosition(0.14);
+            backWrist.setPosition(0.13);
             slideR.setVelocity(3000);
             slideL.setVelocity(3000);
             slideR.setTargetPosition(SLIDES_SPECIMEN_DOWN);
@@ -444,19 +464,6 @@ public class Specimen_Auto extends LinearOpMode {
                     backClaw.setPosition(BACK_CLAW_OPENED);
                 }
             }
-        }
-    }
-
-    public void stoppersDown(){
-        while(slideR.getCurrentPosition() < SLIDES_SPECIMEN_PREP_HANG + 5 && opModeIsActive()){
-            stopper1.setPosition(STOPPER1_DOWN);
-            stopper2.setPosition(STOPPER2_DOWN);
-            backWrist.setPosition(0.14);
-            backClaw.setPosition(BACK_CLAW_CLOSED);
-            slideR.setVelocity(3000);
-            slideL.setVelocity(3000);
-            slideR.setTargetPosition(SLIDES_SPECIMEN_PREP_HANG);
-            slideL.setTargetPosition(SLIDES_SPECIMEN_PREP_HANG);
         }
     }
 
@@ -518,6 +525,21 @@ public class Specimen_Auto extends LinearOpMode {
     public void backWrist(double pos){ //0 is out, 0.65 is towards the other claw
         while (backWrist.getPosition() != pos && opModeIsActive()) {
             backWrist.setPosition(pos);
+        }
+    }
+
+    public class StoppersDown extends Thread{
+        public void run(){
+            while(slideR.getCurrentPosition() < SLIDES_SPECIMEN_PREP_HANG + 5 && opModeIsActive()){
+                //stopper1.setPosition(STOPPER1_DOWN);
+                //stopper2.setPosition(STOPPER2_DOWN);
+                backWrist.setPosition(0.13);
+                backClaw.setPosition(BACK_CLAW_CLOSED);
+                slideR.setVelocity(3000);
+                slideL.setVelocity(3000);
+                slideR.setTargetPosition(SLIDES_SPECIMEN_PREP_HANG);
+                slideL.setTargetPosition(SLIDES_SPECIMEN_PREP_HANG);
+            }
         }
     }
 }

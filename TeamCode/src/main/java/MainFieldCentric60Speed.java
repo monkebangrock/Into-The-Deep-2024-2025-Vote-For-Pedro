@@ -243,7 +243,7 @@ public class MainFieldCentric60Speed extends LinearOpMode {
         runtime.reset();
         wrist.setPosition(0.48);
         claw.setPosition(FRONT_CLAW_OPENED);
-        backWrist.setPosition(0.14);
+        backWrist.setPosition(0.13);
         backClaw.setPosition(BACK_CLAW_OPENED);
         rotWrist.setPosition(rotWristPos);
         stopper1.setPosition(STOPPER1_UP);
@@ -814,7 +814,7 @@ public class MainFieldCentric60Speed extends LinearOpMode {
                 sleep(300);
                 claw.setPosition(FRONT_CLAW_OPENED);
                 sleep(200);
-                backWrist.setPosition(0.14);
+                backWrist.setPosition(0.13);
                 depositMode = false;
                 // get slide in prep position
                 slideR.setVelocity(5000);
